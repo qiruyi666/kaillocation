@@ -28,8 +28,4 @@ object UsageManager {
         KailLog.i(context, TAG, "consumeSimulation=true: offline mode")
         return true
     }
-}            }
-            false
-        }
-    }
 }
