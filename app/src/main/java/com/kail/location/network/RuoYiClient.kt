@@ -1,42 +1,10 @@
 package com.kail.location.network
 
-import com.kail.location.BuildConfig
-import com.kail.location.utils.KailLog
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-import java.security.cert.X509Certificate
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 
 object RuoYiClient {
-
-    private const val TAG = "RuoYiClient"
-    private const val JSON_TYPE = "application/json"
-
-    var baseUrl: String = BuildConfig.APP_API_URL
-
-    private val trustAllCertificates = object : X509TrustManager {
-        override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-        override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-    }
-
-    val okHttpClient: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .sslSocketFactory(
-            SSLContext.getInstance("TLS").apply {
-                init(null, arrayOf<TrustManager>(trustAllCertificates), java.security.SecureRandom())
-            }.socketFactory,
-            trustAllCertificates
-        )
-        .hostnameVerifier { _, _ -> true }
-        .build()
+    var baseUrl: String = "offline://local"
+    val okHttpClient: OkHttpClient = OkHttpClient.Builder().build()
 
     data class AuthResult(
         val token: String,
@@ -45,68 +13,74 @@ object RuoYiClient {
         val verified: Boolean
     )
 
-    private fun Request.Builder.withTenant(): Request.Builder {
-        return this.header("tenant-id", "1")
-    }
-
-    private fun Request.Builder.withAuth(token: String): Request.Builder {
-        return this.header("Authorization", "Bearer $token")
-    }
-
     fun checkSimulation(token: String): Result<Int> {
-        return runCatching {
-            val url = "$baseUrl/member/simulation/check"
-            val request = Request.Builder()
-                .url(url)
-                .get()
-                .header("Content-Type", JSON_TYPE)
-                .withAuth(token)
-                .withTenant()
-                .build()
-
-            val response = okHttpClient.newCall(request).execute()
-            val body = response.body?.string() ?: throw Exception("Empty response")
-            val root = JSONObject(body)
-            val code = root.optInt("code", -1)
-            if (code != 0) {
-                throw Exception(root.optString("msg", "获取剩余次数失败"))
-            }
-            val remaining = root.getJSONObject("data").optInt("remainingToday", 0)
-            KailLog.i(null, TAG, "checkSimulation: http=${response.code} code=$code remainingToday=$remaining")
-            remaining
-        }.onFailure { KailLog.w(null, TAG, "checkSimulation failed: ${it.message}") }
+        return Result.success(Int.MAX_VALUE)
     }
 
     fun useSimulation(token: String): Result<Unit> {
-        return runCatching {
-            val url = "$baseUrl/member/simulation/use"
-            val request = Request.Builder()
-                .url(url)
-                .post("{}".toRequestBody(JSON_TYPE.toMediaType()))
-                .header("Content-Type", JSON_TYPE)
-                .withAuth(token)
-                .withTenant()
-                .build()
-
-            val response = okHttpClient.newCall(request).execute()
-            val body = response.body?.string() ?: throw Exception("Empty response")
-
-            val root = JSONObject(body)
-            val code = root.optInt("code", -1)
-            KailLog.i(null, TAG, "useSimulation: http=${response.code} code=$code msg=${root.optString("msg", "")}")
-            if (code != 0) {
-                throw Exception(root.optString("msg", "模拟次数已用完"))
-            }
-        }.onFailure { KailLog.w(null, TAG, "useSimulation failed: ${it.message}") }
+        return Result.success(Unit)
     }
 
     fun sendMailCode(mail: String, scene: Int): Result<Unit> {
-        return runCatching {
-            val url = "$baseUrl/member/auth/send-mail-code"
-            val json = JSONObject().apply {
-                put("mail", mail)
-                put("scene", scene)
-            }
+        return Result.success(Unit)
+    }
+
+    fun loginByMail(mail: String, code: String): Result<AuthResult> {
+        return Result.success(
+            AuthResult(
+                token = "offline-token",
+                email = mail.ifBlank { "offline@local" },
+                id = "offline-user",
+                verified = true
+            )
+        )
+    }
+
+    data class SubscriptionStatus(
+        val active: Boolean,
+        val planName: String,
+        val expiresAt: String,
+        val daysRemaining: Int
+    )
+
+    data class SubscriptionPlan(
+        val id: Long,
+        val name: String,
+        val description: String,
+        val price: Int,
+        val currency: String,
+        val billingInterval: String,
+        val billingIntervalCount: Int,
+        val trialDays: Int
+    )
+
+    suspend fun getPlans(token: String): Result<List<SubscriptionPlan>> {
+        return Result.success(emptyList())
+    }
+
+    data class NoticeInfo(
+        val id: Long,
+        val title: String,
+        val type: Int,
+        val content: String,
+        val createTime: String
+    )
+
+    suspend fun getNoticeList(): Result<List<NoticeInfo>> {
+        return Result.success(emptyList())
+    }
+
+    suspend fun getSubscriptionStatus(token: String): Result<SubscriptionStatus> {
+        return Result.success(
+            SubscriptionStatus(
+                active = true,
+                planName = "Offline",
+                expiresAt = "2099-12-31 23:59:59",
+                daysRemaining = 99999
+            )
+        )
+    }
+}            }
 
             val request = Request.Builder()
                 .url(url)
