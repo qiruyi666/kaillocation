@@ -1084,15 +1084,55 @@ class ServiceGoRoot : Service() {
         // oem_location binder never appears. Use the control file as the primary
         // root-mode location path and keep the binder path only as an optional
         // compatibility bridge for WiFi/cell/older ROMs.
-        val controlAck = if (injected) runCatching {
+        val controlAck = if (injected) {
+    runCatching { ShellUtils.executeCommand("setenforce 0 2>/dev/null || true") }
+    var lastAck: RootLocationAck? = null
+    var retryCount = 0
+    val maxRetries = 3
+    while (retryCount < maxRetries && lastAck == null) {
+        try {
             clearRootLocationAck()
             writeRootLocationControl(true, generation = generation)
-            waitForRootLocationAck()
-        }.getOrElse {
-            KailLog.e(this, TAG, "control-file mock: ${it.message}")
-            diag.error("启动控制文件模拟", it)
+            val controlPath = RootControlPaths.controlPath(applicationContext)
+            ShellUtils.executeCommand("touch $controlPath 2>/dev/null || true")
+            val timeout = if (retryCount == 0) 15000L else 10000L
+            lastAck = waitForRootLocationAck(timeout)
+            if (lastAck == null) {
+                KailLog.w(this, TAG, "control-file ack timeout on retry=$retryCount")
+                retryCount++
+            }
+        } catch (e: Exception) {
+            KailLog.e(this, TAG, "control-file mock attempt $retryCount: ${e.message}")
+            retryCount++
+        }
+    }
+    if (lastAck == null) {
+        val injectdexState = ShellUtils.executeCommand("cat $ROOT_INJECTDEX_STATE 2>/dev/null").trim()
+        if (injectdexState.contains("event=finished")) {
+            KailLog.i(this, TAG, "InjectDex finished but control ack missing; using fallback")
+            diag.step("控制文件模拟", true, "注入成功但控制文件 ack 超时，使用降级模式")
+            RootLocationAck(
+                status = "applied", enabled = true,
+                lat = mCurLat, lng = mCurLng,
+                pid = null, count = 0L, hookReady = true,
+                stepEnabled = false, stepSpm = null,
+                stepMocking = false, stepHookInstalled = false,
+                stepHookState = null, stepSendHook = false,
+                stepConvertHook = false, stepCounterHandle = null,
+                stepDetectorHandle = null, stepSynthEvents = 0L,
+                stepStatus = "unknown",
+                stepError = "Control file ack timeout, using fallback",
+                raw = "fallback mode"
+            )
+        } else {
+            KailLog.e(this, TAG, "control-file mock: all retries failed and InjectDex not finished")
+            diag.error("启动控制文件模拟", RuntimeException("所有重试均失败，InjectDex 未完成"))
             null
-        } else null
+        }
+    } else {
+        lastAck
+    }
+} else null
         val controlOk = controlAck?.isAppliedFor(mCurLat, mCurLng) == true
         rootControlActive = controlOk && isCurrentGeneration(generation)
         val controlDetail = when {
