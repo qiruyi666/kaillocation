@@ -9,6 +9,7 @@ extra["versionCode"] = 37
 extra["versionName"] = "1.6.4"
 
 plugins {
+    id("com.google.devtools.ksp") version "2.2.0-2.0.2" apply false
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlin.android) apply false
