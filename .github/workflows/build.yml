@@ -36,10 +36,12 @@ jobs:
           export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
           chmod +x gradlew
-          ./gradlew :app:assembleDebug --stacktrace
+          ./gradlew :app:assembleDebug :KailLocationXposed:app:assembleDebug --stacktrace
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: 我的免费纯净APK-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            KailLocationXposed/app/build/outputs/apk/debug/*.apk
