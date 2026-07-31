@@ -30,8 +30,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "location"
 include(":app")
+include(":KailLocationXposed:app")
 include(":NewBlackbox:Bcore")
 include(":NewBlackbox:black-reflection")
 include(":NewBlackbox:compiler")
-// Note: ":NewBlackbox:app" (BlackBox's standalone demo launcher) is intentionally
-// not included — the main app only depends on :NewBlackbox:Bcore.
