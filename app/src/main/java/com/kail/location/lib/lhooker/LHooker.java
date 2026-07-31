@@ -365,6 +365,7 @@ public class LHooker {
                 } catch (Throwable unused) {
                 }
             }
+            if (sdkInt > 34) sdkInt = 34;
             int rc = init(sdkInt);
             initialized = rc == 0;
             com.kail.location.inject.utils.InjectLog.persist("LHooker", "init rc=", rc, " initialized=", initialized);
