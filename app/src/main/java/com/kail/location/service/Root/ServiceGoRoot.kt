@@ -1800,7 +1800,7 @@ class ServiceGoRoot : Service() {
         ShellUtils.executeCommand("rm -f ${RootControlPaths.ackPath(applicationContext)}")
     }
 
-    private fun waitForRootLocationAck(timeoutMs: Long = 4000L): RootLocationAck? {
+    private fun waitForRootLocationAck(timeoutMs: Long = 15000L): RootLocationAck? {
         val ackPath = RootControlPaths.ackPath(applicationContext)
         val deadline = SystemClock.elapsedRealtime() + timeoutMs
         while (SystemClock.elapsedRealtime() < deadline) {
