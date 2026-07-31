@@ -566,6 +566,10 @@ object RootDeployer {
                 rootCmd("cp -f ${versioned.absolutePath} ${mirror.absolutePath}", ROOT_COPY_TIMEOUT_MS)
                 rootCmd("chmod 777 ${mirror.absolutePath}")
                 rootCmd("chcon u:object_r:system_file:s0 ${mirror.absolutePath} 2>/dev/null || true")
+                val unversioned = File(FAKELOC_DIR, sixtyFour)
+                rootCmd("cp -f ${mirror.absolutePath} ${unversioned.absolutePath}", ROOT_COPY_TIMEOUT_MS)
+                rootCmd("chmod 777 ${unversioned.absolutePath}")
+                rootCmd("chcon u:object_r:system_file:s0 ${unversioned.absolutePath} 2>/dev/null || true")
             }
         }
         return initLoader
