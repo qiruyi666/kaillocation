@@ -241,28 +241,40 @@ class JoystickWindowManager(
         }
     }
 
-    private fun processDirection(auto: Boolean, angle: Double, r: Double) {
+        private fun processDirection(auto: Boolean, angle: Double, r: Double) {
         if (r <= 0) {
             timer.cancel()
             isMove = false
-        } else {
-            mAngle = angle
-            mR = r
-            if (auto) {
-                if (!isMove) {
-                    timer.start()
-                    isMove = true
-                }
-            } else {
-                timer.cancel()
-                isMove = false
-                val speed = viewModel.speed.value
-                val disLng = speed * (DIV_GO / 1000.0) * mR * cos(mAngle * 2.0 * Math.PI / 360) / 1000
-                val disLat = speed * (DIV_GO / 1000.0) * mR * sin(mAngle * 2.0 * Math.PI / 360) / 1000
-                listener.onMoveInfo(speed, disLng, disLat, 90.0 - mAngle)
+            return
+        }
+
+        mAngle = angle
+        mR = r
+
+        // 按住摇杆时立即移动一次，避免松手后才移动
+        emitMove()
+
+        if (auto) {
+            if (!isMove) {
+                timer.start()
+                isMove = true
             }
+        } else {
+            timer.cancel()
+            isMove = false
         }
     }
+
+    private fun emitMove() {
+        val speed = viewModel.speed.value
+        val disLng = speed * (DIV_GO / 1000.0) * mR *
+            cos(mAngle * 2.0 * Math.PI / 360) / 1000
+        val disLat = speed * (DIV_GO / 1000.0) * mR *
+            sin(mAngle * 2.0 * Math.PI / 360) / 1000
+
+        listener.onMoveInfo(speed, disLng, disLat, 90.0 - mAngle)
+    }
+
 
     /**
      * Custom LifecycleOwner for floating windows to manage Compose lifecycle properly.
@@ -290,6 +302,6 @@ class JoystickWindowManager(
     }
 
     companion object {
-        private const val DIV_GO = 1000L
+        private const val DIV_GO = 100L
     }
 }
