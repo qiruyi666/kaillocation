@@ -288,6 +288,16 @@ object RootDeployer {
             disableStaleRootControls()
             clearInjectionRuntimeFiles(context)
 
+                        if (android.os.Build.VERSION.SDK_INT >= 35) {
+                KailLog.w(null, TAG, "Android 15+: skip ptrace, try Xposed bridge first")
+                val bridgeOk = tryXposedBridgeInjection(context)
+                if (bridgeOk) {
+                    KailLog.i(null, TAG, "bootstrapInjection: Xposed bridge success on Android 15")
+                    return true to "Android 15 使用 Xposed 桥接加载 inject.dex 成功"
+                }
+                return false to "Android 15 已跳过 ptrace native 注入，但 Xposed 桥接不可用。请确认 KailLocationXposed 已在 LSPosed 中启用，并作用到系统框架。"
+            }
+
             // --- 先试 ptrace 注入 ---
             val sessionLHooker = prepareSessionLHooker(context)
             val sessionArg = if (sessionLHooker.isNullOrBlank()) "" else " -a ${shellQuote(sessionLHooker)}"
