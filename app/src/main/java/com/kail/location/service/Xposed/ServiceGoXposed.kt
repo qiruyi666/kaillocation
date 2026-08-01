@@ -643,18 +643,32 @@ class ServiceGoXposed : Service() {
     private fun initJoyStick() {
         mJoystickViewModel = JoystickViewModel(application)
         mJoystickManager = JoystickWindowManager(this, mJoystickViewModel, object : JoystickViewModel.ActionListener {
-            override fun onMoveInfo(speed: Double, disLng: Double, disLat: Double, angle: Double) {
+                        override fun onMoveInfo(speed: Double, disLng: Double, disLat: Double, angle: Double) {
                 mSpeed = speed
                 val next = GeoPredict.nextByDisplacementKm(mCurLng, mCurLat, disLng, disLat)
                 mCurLng = next.first
                 mCurLat = next.second
                 mCurBea = angle.toFloat()
+
+                sendXposedCommand("update_location", Bundle().apply {
+                    putDouble("lat", mCurLat)
+                    putDouble("lon", mCurLng)
+                })
+
+                mJoystickViewModel.setCurrentPosition(mCurLng, mCurLat, mCurAlt)
             }
 
             override fun onPositionInfo(lng: Double, lat: Double, alt: Double) {
                 mCurLng = lng
                 mCurLat = lat
                 mCurAlt = alt
+
+                sendXposedCommand("update_location", Bundle().apply {
+                    putDouble("lat", mCurLat)
+                    putDouble("lon", mCurLng)
+                })
+
+                mJoystickViewModel.setCurrentPosition(mCurLng, mCurLat, mCurAlt)
             }
 
             override fun onRouteControl(action: String) {
