@@ -452,22 +452,7 @@ fun AppDrawer(
                     style = MaterialTheme.typography.labelSmall
                 )
             }
-            item {
-                NavigationDrawerItem(
-                    label = { Text(stringResource(R.string.nav_menu_contact)) },
-                    icon = { Icon(painterResource(R.drawable.ic_contact), contentDescription = null) },
-                    selected = false,
-                    onClick = { scope.launch { closeDrawerSmooth(); onNavigate(R.id.nav_contact) } }
-                )
-            }
-            item {
-                NavigationDrawerItem(
-                    label = { Text(stringResource(R.string.nav_menu_sponsor)) },
-                    icon = { Icon(painterResource(R.drawable.ic_user), contentDescription = null) },
-                    selected = false,
-                    onClick = { scope.launch { closeDrawerSmooth(); onNavigate(R.id.nav_sponsor) } }
-                )
-            }
+            
             item {
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.nav_menu_github)) },
